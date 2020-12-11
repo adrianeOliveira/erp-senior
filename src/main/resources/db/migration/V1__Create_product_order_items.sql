@@ -1,28 +1,28 @@
 create table order_table (
-	id_order varchar(40) not null,
+	id_order varchar(40) not null unique,
 	status varchar(10) not null,
-	primary key(id_order)
+	constraint pk_id_order primary key(id_order)
 );
 
 create table product (
-	id_product varchar(40) not null,
+	id_product varchar(40) not null unique,
 	name varchar(200) not null,
 	price decimal(10,9) not null,
 	is_service boolean not null,
 	is_active boolean not null,
-	primary key(id_product)
+	constraint pk_id_product primary key(id_product)
 );
 
 create table item (
-	id_item varchar(40) not null,
+	id_item varchar(40) not null unique,
 	unit_price decimal(10,2) not null,
 	discount decimal(10,2) null,
 	id_order varchar(40) not null,
 	id_product varchar(40) not null,
 	quantity int not null,
-	primary key(id_item),
-	foreign key(id_order) references order_table(id_order),
-	foreign key(id_product) references product(id_product)
+	constraint pk_id_item primary key(id_item),
+	constraint fk_id_order foreign key(id_order) references order_table(id_order),
+	constraint fk_id_product foreign key(id_product) references product(id_product)
 );
 
 
