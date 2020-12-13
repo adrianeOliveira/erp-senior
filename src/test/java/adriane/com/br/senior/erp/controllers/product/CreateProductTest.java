@@ -2,8 +2,10 @@ package adriane.com.br.senior.erp.controllers.product;
 
 import adriane.com.br.senior.erp.entities.Product;
 import adriane.com.br.senior.erp.factories.ProductFactory;
+import adriane.com.br.senior.erp.rest.dto.ProductDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.restassured.http.ContentType;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +22,11 @@ public class CreateProductTest {
 
     @Test
     void createProductWithSuccess() throws JsonProcessingException {
-        Product product = productFactory.build();
+        ProductDto product = productFactory.build();
         ObjectMapper objectMapper = new ObjectMapper();
 
         Product result = given()
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(objectMapper.writeValueAsString(product))
             .when()
                 .post("/products")

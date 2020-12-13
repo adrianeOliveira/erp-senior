@@ -48,9 +48,10 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Product findProductById(final UUID id) {
-        return productRepository.findById(id)
+    public ProductDto findProductById(final UUID id) {
+        Product product = productRepository.findById(id)
                 .orElseThrow(ProductNotFoundException::new);
+        return productMapper.productEntityToDto(product);
     }
 
     @Transactional(readOnly = true)

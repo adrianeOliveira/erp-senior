@@ -1,40 +1,46 @@
 package adriane.com.br.senior.erp.factories;
 
-import adriane.com.br.senior.erp.entities.Product;
+import adriane.com.br.senior.erp.mapper.ProductMapper;
 import adriane.com.br.senior.erp.repositories.ProductRepository;
+import adriane.com.br.senior.erp.rest.dto.ProductDto;
 import br.com.leonardoferreira.jbacon.JBacon;
 import com.github.javafaker.Faker;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ProductFactory extends JBacon<Product> {
-
-    private final Faker faker;
+public class ProductFactory extends JBacon<ProductDto> {
 
     private final ProductRepository productRepository;
 
-    public ProductFactory(Faker faker, ProductRepository productRepository) {
-        this.faker = faker;
+    private final ProductMapper productMapper;
+
+    private final Faker faker;
+
+    public ProductFactory(ProductRepository productRepository,
+                          ProductMapper productMapper,
+                          Faker faker) {
         this.productRepository = productRepository;
+        this.productMapper = productMapper;
+        this.faker = faker;
     }
 
     @Override
-    protected Product getDefault() {
-        Product product = new Product();
-        product.setName(faker.funnyName().name());
-        product.setIsService(faker.random().nextBoolean());
-        product.setIsActive(faker.random().nextBoolean());
-        product.setPrice(faker.number().randomDouble(2,1, 9));
-        return product;
+    protected ProductDto getDefault() {
+        return ProductDto.builder()
+                .name(faker.funnyName().name())
+                .price(faker.number().randomDouble(2,1,9))
+                .isActive(true)
+                .isService(faker.random().nextBoolean())
+                .build();
     }
 
     @Override
-    protected Product getEmpty() {
-        return new Product();
+    protected ProductDto getEmpty() {
+        return ProductDto.builder().build();
     }
 
     @Override
-    protected void persist(Product product) {
-        productRepository.save(product);
+    protected void persist(ProductDto product) {
+        productRepository.save(productMapper.productDtoToEntity(product));
     }
 }

@@ -1,0 +1,1 @@
+alter table order_table alter column status type varchar(15);
