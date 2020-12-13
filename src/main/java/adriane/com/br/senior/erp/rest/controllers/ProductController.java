@@ -60,7 +60,7 @@ public class ProductController {
 
     @GetMapping("/{productId}")
     @ResponseStatus(HttpStatus.OK)
-    public Product findProductById(@PathVariable final UUID productId) {
+    public ProductDto findProductById(@PathVariable final UUID productId) {
         log.info("M=findProductById, productId = {}", productId);
         return productService.findProductById(productId);
     }
