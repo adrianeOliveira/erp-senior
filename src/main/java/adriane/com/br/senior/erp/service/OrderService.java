@@ -3,6 +3,7 @@ package adriane.com.br.senior.erp.service;
 import adriane.com.br.senior.erp.entities.Item;
 import adriane.com.br.senior.erp.entities.Order;
 import adriane.com.br.senior.erp.exception.ProductNotAllowedException;
+import adriane.com.br.senior.erp.exception.ProductNotFoundException;
 import adriane.com.br.senior.erp.mapper.ItemMapper;
 import adriane.com.br.senior.erp.mapper.OrderMapper;
 import adriane.com.br.senior.erp.repositories.ItemRepository;
@@ -11,8 +12,6 @@ import adriane.com.br.senior.erp.rest.dto.ItemDto;
 import adriane.com.br.senior.erp.rest.dto.OrderDto;
 import adriane.com.br.senior.erp.rest.dto.ProductDto;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +50,7 @@ public class OrderService {
         List<Order> orders = orderRepository.findAll();
 
         return orders.stream()
-                .map(order -> orderMapper.OrderEntityToDto(order))
+                .map(orderMapper::orderEntityToDto)
                 .collect(Collectors.toList());
     }
 
@@ -60,7 +59,7 @@ public class OrderService {
         List<Item> items = itemRepository.findItemByOrderId(orderId);
 
         return items.stream()
-                .map(item -> itemMapper.itemEntityToDto(item))
+                .map(itemMapper::itemEntityToDto)
                 .collect(Collectors.toList());
 
     }
@@ -74,14 +73,20 @@ public class OrderService {
             ProductDto productDto = productService
                     .findProductById(itemDto.getProduct().getId());
 
-            if (!productDto.getIsActive()) {
+            if (productDto == null){
+                log.error("M=insertOrder, E= produto não cadastrado");
+                throw new ProductNotFoundException();
+            }
+
+            if (!Boolean.TRUE.equals(productDto.getIsActive())) {
+                log.error("M=insertOrder, E= produto não pode estar desativado");
                 throw new ProductNotAllowedException();
             }
 
         });
 
         log.info("M=insertOrder, I=salvando ordem");
-        Order order = orderRepository.save(orderMapper.OrderDtoToEntiy(orderDto));
+        Order order = orderRepository.save(orderMapper.orderDtoToEntiy(orderDto));
 
         itemsDto.forEach(itemDto -> {
 
@@ -96,7 +101,4 @@ public class OrderService {
         return orderDto;
     }
 
-    private Pageable createPageRequest() {
-        return PageRequest.of(0, 5);
-    }
 }

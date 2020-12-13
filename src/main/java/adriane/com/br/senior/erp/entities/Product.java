@@ -1,6 +1,5 @@
 package adriane.com.br.senior.erp.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

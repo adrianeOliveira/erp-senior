@@ -42,6 +42,6 @@ public class OrderDtoFactory extends JBacon<OrderDto> {
 
     @Override
     protected void persist(OrderDto order) {
-        orderRepository.save(orderMapper.OrderDtoToEntiy(order));
+        orderRepository.save(orderMapper.orderDtoToEntiy(order));
     }
 }
