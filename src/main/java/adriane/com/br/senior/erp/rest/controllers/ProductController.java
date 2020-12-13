@@ -1,8 +1,11 @@
-package adriane.com.br.senior.erp.controllers;
+package adriane.com.br.senior.erp.rest.controllers;
 
 import adriane.com.br.senior.erp.entities.Product;
+import adriane.com.br.senior.erp.rest.dto.ProductDto;
 import adriane.com.br.senior.erp.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -30,23 +32,23 @@ public class ProductController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<Product> listProducts() {
+    public Page<Product> listProducts(Pageable pageRequest) {
         log.info("M=listProducts, I=Buscando todos os Produtos ativos");
-        return productService.listProducts(true);
+        return productService.listProducts(true, pageRequest);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Product createProduct(@RequestBody final Product product) {
-        log.info("M=createProduct, product = {}", product);
-        return productService.saveProduct(product);
+    public ProductDto createProduct(@RequestBody final ProductDto dto) {
+        log.info("M=createProduct, product = {}", dto);
+        return productService.saveProduct(dto);
     }
 
     @PutMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateProduct(@PathVariable UUID productId, @RequestBody Product product) {
-        log.info("M=updateProduct, productId = {}, product = {}", productId, product);
-        productService.updateProduct(productId, product);
+    public void updateProduct(@PathVariable UUID productId, @RequestBody ProductDto dto) {
+        log.info("M=updateProduct, productId = {}, product = {}", productId, dto);
+        productService.updateProduct(productId, dto);
     }
 
     @DeleteMapping("/{productId}")

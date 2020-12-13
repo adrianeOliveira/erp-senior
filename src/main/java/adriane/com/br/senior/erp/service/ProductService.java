@@ -2,11 +2,15 @@ package adriane.com.br.senior.erp.service;
 
 import adriane.com.br.senior.erp.entities.Product;
 import adriane.com.br.senior.erp.exception.ProductNotFoundException;
+import adriane.com.br.senior.erp.mapper.ProductMapper;
 import adriane.com.br.senior.erp.repositories.ProductRepository;
+import adriane.com.br.senior.erp.rest.dto.ProductDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -14,20 +18,25 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    private final ProductMapper productMapper;
+
+    public ProductService(ProductRepository productRepository, ProductMapper productMapper) {
         this.productRepository = productRepository;
+        this.productMapper = productMapper;
     }
 
     @Transactional
-    public Product saveProduct(final Product product) {
-        return productRepository.save(product);
+    public ProductDto saveProduct(final ProductDto productDto) {
+        Product product = productMapper.productDtoToEntity(productDto);
+        return productMapper.productEntityToDto(productRepository.save(product));
     }
 
     @Transactional
-    public Product updateProduct(final UUID id, final Product product) {
+    public void updateProduct(final UUID id, final ProductDto productDto) {
         if (productRepository.existsById(id)) {
-            product.setId(id);
-            return productRepository.save(product);
+            productDto.setId(id);
+            Product product = productMapper.productDtoToEntity(productDto);
+            productRepository.save(product);
         } else {
             throw new ProductNotFoundException();
         }
@@ -45,8 +54,11 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<Product> listProducts(final Boolean isActive) {
-        return productRepository.findByIsActive(true);
+    public Page<Product> listProducts(final Boolean isActive, Pageable pageRequest) {
+        return productRepository.findByIsActive(isActive, pageRequest);
     }
 
+    private Pageable createPageRequest() {
+        return PageRequest.of(0, 10);
+    }
 }
