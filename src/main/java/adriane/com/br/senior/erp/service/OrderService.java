@@ -2,6 +2,8 @@ package adriane.com.br.senior.erp.service;
 
 import adriane.com.br.senior.erp.entities.Item;
 import adriane.com.br.senior.erp.entities.Order;
+import adriane.com.br.senior.erp.entities.OrderStatus;
+import adriane.com.br.senior.erp.exception.DiscountNotAllowedException;
 import adriane.com.br.senior.erp.exception.ProductNotAllowedException;
 import adriane.com.br.senior.erp.exception.ProductNotFoundException;
 import adriane.com.br.senior.erp.mapper.ItemMapper;
@@ -68,7 +70,7 @@ public class OrderService {
     public OrderDto insertOrder(OrderDto orderDto) {
         List<ItemDto> itemsDto = orderDto.getItems();
         log.info("M=insertOrder, I=validando produtos no pedido, order={}", orderDto);
-        verifyProducts(itemsDto);
+        verifyItems(itemsDto, orderDto.getStatus());
 
         log.info("M=insertOrder, I=salvando ordem");
         Order order = orderRepository.save(orderMapper.orderDtoToEntiy(orderDto));
@@ -86,23 +88,40 @@ public class OrderService {
         return orderDto;
     }
 
-    private void verifyProducts(List<ItemDto> itemsDto) {
+    private void verifyItems(List<ItemDto> itemsDto, OrderStatus statusFromOrder) {
         itemsDto.forEach(itemDto -> {
 
-            ProductDto productDto = productService
-                    .findProductById(itemDto.getProduct().getId());
+            ProductDto productDto = verifyProductsFromItem(itemDto);
 
-            if (productDto == null){
-                log.error("M=insertOrder, E= produto não cadastrado, item={}", itemDto);
-                throw new ProductNotFoundException("Produto não existe");
-            }
+            if (itemDto.getDiscount() != null && itemDto.getDiscount() > 0){
+                if(Boolean.TRUE.equals(productDto.getIsService())) {
+                    log.error("M=verifyItems, E=Desconto não permitido para produtos do tipo serviço, product={}", productDto);
+                    throw new DiscountNotAllowedException("Desconto não permitido para produtos do tipo serviço");
+                }
 
-            if (!Boolean.TRUE.equals(productDto.getIsActive())) {
-                log.error("M=insertOrder, E= produto não pode estar desativado, product={}", productDto);
-                throw new ProductNotAllowedException("Produto não pode estar desativado");
+                if (OrderStatus.ABERTA.equals(statusFromOrder)) {
+                    log.error("M=verifyItems, E=Desconto não permitido para pedidos com status diferente de ABERTO");
+                    throw new DiscountNotAllowedException("Desconto não permitido para pedidos com status diferente de ABERTO");
+                }
             }
 
         });
+    }
+
+    private ProductDto verifyProductsFromItem(ItemDto itemDto) {
+        ProductDto productDto = productService
+                .findProductById(itemDto.getProduct().getId());
+
+        if (productDto == null){
+            log.error("M=verifyProductsFromItem, E= produto não cadastrado, item={}", itemDto);
+            throw new ProductNotFoundException("Produto não existe");
+        }
+
+        if (!Boolean.TRUE.equals(productDto.getIsActive())) {
+            log.error("M=verifyProductsFromItem, E= produto não pode estar desativado, product={}", productDto);
+            throw new ProductNotAllowedException("Produto não pode estar desativado");
+        }
+        return productDto;
     }
 
 }

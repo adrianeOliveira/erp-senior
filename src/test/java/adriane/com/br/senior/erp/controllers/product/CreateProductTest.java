@@ -15,7 +15,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class CreateProductTest {
+class CreateProductTest {
 
     @Autowired
     private ProductFactory productFactory;

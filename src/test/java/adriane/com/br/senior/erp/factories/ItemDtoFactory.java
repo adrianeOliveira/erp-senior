@@ -47,7 +47,7 @@ public class ItemDtoFactory extends JBacon<ItemDto> {
         return ItemDto.builder()
                 .product(productFactory.getEmpty())
                 .quantity(faker.number().randomDigitNotZero())
-                .discount(faker.number().randomDouble(2,1,9))
+                .discount(0.0)
                 .unitPrice(faker.number().randomDouble(2,1,9))
                 .build();
     }

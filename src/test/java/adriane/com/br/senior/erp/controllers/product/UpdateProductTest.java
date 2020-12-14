@@ -16,7 +16,7 @@ import java.util.UUID;
 import static io.restassured.RestAssured.given;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class UpdateProductTest {
+class UpdateProductTest {
 
     @Autowired
     private ProductFactory productFactory;
