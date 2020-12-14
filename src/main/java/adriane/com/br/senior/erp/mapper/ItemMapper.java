@@ -4,6 +4,9 @@ import adriane.com.br.senior.erp.entities.Item;
 import adriane.com.br.senior.erp.rest.dto.ItemDto;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 public class ItemMapper {
 
@@ -23,6 +26,12 @@ public class ItemMapper {
                 .build();
     }
 
+    public List<Item> itemListDtoToEntityList(List<ItemDto>itemsDto) {
+        return itemsDto.stream()
+                .map(this::itemDtoToEntity)
+                .collect(Collectors.toList());
+    }
+
     public Item itemDtoToEntity(ItemDto dto) {
         Item item = new Item();
         item.setId(dto.getId());
@@ -31,5 +40,11 @@ public class ItemMapper {
         item.setUnitPrice(dto.getUnitPrice());
         item.setProduct(productMapper.productDtoToEntity(dto.getProduct()));
         return item;
+    }
+
+    public List<ItemDto> itemEntityListToListDto(List<Item> items) {
+        return items.stream()
+                .map(this::itemEntityToDto)
+                .collect(Collectors.toList());
     }
 }

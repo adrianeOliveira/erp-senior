@@ -4,6 +4,7 @@ import adriane.com.br.senior.erp.entities.Item;
 import adriane.com.br.senior.erp.entities.Order;
 import adriane.com.br.senior.erp.entities.OrderStatus;
 import adriane.com.br.senior.erp.exception.DiscountNotAllowedException;
+import adriane.com.br.senior.erp.exception.OrderNotFoundException;
 import adriane.com.br.senior.erp.exception.ProductNotAllowedException;
 import adriane.com.br.senior.erp.exception.ProductNotFoundException;
 import adriane.com.br.senior.erp.mapper.ItemMapper;
@@ -35,11 +36,11 @@ public class OrderService {
 
     private final ItemMapper itemMapper;
 
-    public OrderService(OrderRepository orderRepository,
-                        ItemRepository itemRepository,
-                        ProductService productService,
-                        OrderMapper orderMapper,
-                        ItemMapper itemMapper) {
+    public OrderService(final OrderRepository orderRepository,
+                        final ItemRepository itemRepository,
+                        final ProductService productService,
+                        final OrderMapper orderMapper,
+                        final ItemMapper itemMapper) {
         this.orderRepository = orderRepository;
         this.itemRepository = itemRepository;
         this.productService = productService;
@@ -49,49 +50,74 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public List<OrderDto> listOrders() {
-        List<Order> orders = orderRepository.findAll();
+        final List<Order> orders = orderRepository.findAll();
 
-        return orders.stream()
-                .map(orderMapper::orderEntityToDto)
-                .collect(Collectors.toList());
+        final List<OrderDto> ordersDto = orders.stream()
+                .map(order -> {
+                    final OrderDto orderDto = orderMapper.orderEntityToDto(order);
+                    orderDto.setItems(listItemsFromOrderId(order.getId()));
+                    return orderDto;
+                }).collect(Collectors.toList());
+        return ordersDto;
     }
 
     @Transactional(readOnly = true)
     public List<ItemDto> listItemsFromOrderId(final UUID orderId) {
-        List<Item> items = itemRepository.findItemByOrderId(orderId);
+        final List<Item> items = itemRepository.findItemByOrderId(orderId);
 
         return items.stream()
                 .map(itemMapper::itemEntityToDto)
                 .collect(Collectors.toList());
-
     }
 
     @Transactional
-    public OrderDto insertOrder(OrderDto orderDto) {
-        List<ItemDto> itemsDto = orderDto.getItems();
+    public void updateOrder(final UUID orderId, final OrderDto orderDto) {
+        log.info("M=updateOrder, I=atualizando pedido, order={}", orderDto);
+        if (orderRepository.existsById(orderId)) {
+            orderDto.setId(orderId);
+            final Order order = saveOrder(orderMapper.orderDtoToEntiy(orderDto));
+            saveItems(itemMapper.itemListDtoToEntityList(orderDto.getItems()), order);
+        } else {
+            log.error("M=updateOrder, E=Pedido não existe para ser atualizado, order={}", orderDto);
+            throw new OrderNotFoundException("Pedido não existe para ser atualizado.");
+        }
+    }
+
+    public OrderDto insertOrder(final OrderDto orderDto) {
+        final List<ItemDto> itemsDto = orderDto.getItems();
         log.info("M=insertOrder, I=validando produtos no pedido, order={}", orderDto);
         verifyItems(itemsDto, orderDto.getStatus());
 
-        log.info("M=insertOrder, I=salvando ordem");
-        Order order = orderRepository.save(orderMapper.orderDtoToEntiy(orderDto));
+        final Order order = saveOrder(orderMapper.orderDtoToEntiy(orderDto));
 
-        itemsDto.forEach(itemDto -> {
-
-            Item item = itemMapper.itemDtoToEntity(itemDto);
-            item.setOrder(order);
-            itemDto.setId(itemRepository.save(item).getId());
-
-        });
+        final List<Item> items = saveItems(itemMapper.itemListDtoToEntityList(itemsDto), order);
 
         orderDto.setId(order.getId());
+        orderDto.setItems(itemMapper.itemEntityListToListDto(items));
         log.info("M=insertOrder, I=Pedido salvo com sucesso, order={}", orderDto);
         return orderDto;
     }
 
-    private void verifyItems(List<ItemDto> itemsDto, OrderStatus statusFromOrder) {
+    @Transactional
+    private Order saveOrder(final Order order) {
+        log.info("M=saveOrder, I=salvando ordem");
+        return orderRepository.save(order);
+    }
+
+    @Transactional
+    private List<Item> saveItems(final List<Item> items, final Order order) {
+        log.info("M=saveItems, I=Salvando items da ordem, orderid={}", order.getId());
+        items.forEach(item -> {
+            item.setOrder(order);
+        });
+        return itemRepository.saveAll(items);
+    }
+
+    private void verifyItems(final List<ItemDto> itemsDto,
+                             final OrderStatus statusFromOrder) {
         itemsDto.forEach(itemDto -> {
 
-            ProductDto productDto = verifyProductsFromItem(itemDto);
+            final ProductDto productDto = verifyProductsFromItem(itemDto);
 
             if (itemDto.getDiscount() != null && itemDto.getDiscount() > 0){
                 if(Boolean.TRUE.equals(productDto.getIsService())) {
@@ -108,17 +134,17 @@ public class OrderService {
         });
     }
 
-    private ProductDto verifyProductsFromItem(ItemDto itemDto) {
-        ProductDto productDto = productService
+    private ProductDto verifyProductsFromItem(final ItemDto itemDto) {
+        final ProductDto productDto = productService
                 .findProductById(itemDto.getProduct().getId());
 
         if (productDto == null){
-            log.error("M=verifyProductsFromItem, E= produto não cadastrado, item={}", itemDto);
+            log.error("M=verifyProductsFromItem, E=Produto não cadastrado, item={}", itemDto);
             throw new ProductNotFoundException("Produto não existe");
         }
 
         if (!Boolean.TRUE.equals(productDto.getIsActive())) {
-            log.error("M=verifyProductsFromItem, E= produto não pode estar desativado, product={}", productDto);
+            log.error("M=verifyProductsFromItem, E=produto não pode estar desativado, product={}", productDto);
             throw new ProductNotAllowedException("Produto não pode estar desativado");
         }
         return productDto;

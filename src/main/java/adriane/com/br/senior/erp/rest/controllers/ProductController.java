@@ -32,7 +32,7 @@ public class ProductController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Page<Product> listProducts(Pageable pageRequest) {
+    public Page<Product> listProducts(final Pageable pageRequest) {
         log.info("M=listProducts, I=Buscando todos os Produtos ativos");
         return productService.listProducts(true, pageRequest);
     }
@@ -46,7 +46,8 @@ public class ProductController {
 
     @PutMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateProduct(@PathVariable UUID productId, @RequestBody ProductDto dto) {
+    public void updateProduct(@PathVariable final UUID productId,
+                              @RequestBody final ProductDto dto) {
         log.info("M=updateProduct, productId = {}, product = {}", productId, dto);
         productService.updateProduct(productId, dto);
     }

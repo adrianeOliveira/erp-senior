@@ -11,10 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class OrderControllerTest {
+class CreateOrderTest {
 
     @Autowired
     private OrderDtoFactory orderDtoFactory;
@@ -23,13 +23,17 @@ class OrderControllerTest {
     void createOrderWithSuccess() throws JsonProcessingException {
         OrderDto orderDto = orderDtoFactory.build();
         ObjectMapper mapper = new ObjectMapper();
-        given()
-                .contentType(ContentType.JSON)
-                .body(mapper.writeValueAsString(orderDto))
+        final OrderDto result = given()
+                    .contentType(ContentType.JSON)
+                    .body(mapper.writeValueAsString(orderDto))
                 .when()
-                .post("/orders")
+                    .post("/orders")
                 .then()
-                .statusCode(HttpStatus.SC_CREATED)
-                .body("id", notNullValue());
+                    .statusCode(HttpStatus.SC_CREATED)
+                    .extract()
+                    .as(OrderDto.class);
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(orderDto.getStatus());
+        assertThat(result.getItems().size()).isEqualTo(orderDto.getItems().size());
     }
 }
