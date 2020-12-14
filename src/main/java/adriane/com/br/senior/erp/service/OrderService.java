@@ -52,13 +52,12 @@ public class OrderService {
     public List<OrderDto> listOrders() {
         final List<Order> orders = orderRepository.findAll();
 
-        final List<OrderDto> ordersDto = orders.stream()
+        return orders.stream()
                 .map(order -> {
                     final OrderDto orderDto = orderMapper.orderEntityToDto(order);
                     orderDto.setItems(listItemsFromOrderId(order.getId()));
                     return orderDto;
                 }).collect(Collectors.toList());
-        return ordersDto;
     }
 
     @Transactional(readOnly = true)
@@ -83,6 +82,7 @@ public class OrderService {
         }
     }
 
+    @Transactional
     public OrderDto insertOrder(final OrderDto orderDto) {
         final List<ItemDto> itemsDto = orderDto.getItems();
         log.info("M=insertOrder, I=validando produtos no pedido, order={}", orderDto);
@@ -98,18 +98,14 @@ public class OrderService {
         return orderDto;
     }
 
-    @Transactional
     private Order saveOrder(final Order order) {
         log.info("M=saveOrder, I=salvando ordem");
         return orderRepository.save(order);
     }
 
-    @Transactional
     private List<Item> saveItems(final List<Item> items, final Order order) {
         log.info("M=saveItems, I=Salvando items da ordem, orderid={}", order.getId());
-        items.forEach(item -> {
-            item.setOrder(order);
-        });
+        items.forEach(item -> item.setOrder(order));
         return itemRepository.saveAll(items);
     }
 
