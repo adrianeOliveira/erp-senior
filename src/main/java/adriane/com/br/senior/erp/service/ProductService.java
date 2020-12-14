@@ -5,6 +5,7 @@ import adriane.com.br.senior.erp.exception.ProductNotFoundException;
 import adriane.com.br.senior.erp.mapper.ProductMapper;
 import adriane.com.br.senior.erp.repositories.ProductRepository;
 import adriane.com.br.senior.erp.rest.dto.ProductDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ProductService {
 
@@ -38,7 +40,8 @@ public class ProductService {
             Product product = productMapper.productDtoToEntity(productDto);
             productRepository.save(product);
         } else {
-            throw new ProductNotFoundException();
+            log.error("M=updateProduct, E=Produto não existe");
+            throw new ProductNotFoundException("Produto não existe");
         }
     }
 
@@ -49,8 +52,8 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ProductDto findProductById(final UUID id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(ProductNotFoundException::new);
+       Product product = productRepository.findById(id)
+                .orElse(null);
         return productMapper.productEntityToDto(product);
     }
 

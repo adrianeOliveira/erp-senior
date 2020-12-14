@@ -1,8 +1,11 @@
 package adriane.com.br.senior.erp.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.server.ResponseStatusException;
 
-@ResponseStatus(code = HttpStatus.NOT_FOUND)
-public class ProductNotFoundException extends RuntimeException{
+public class ProductNotFoundException extends ResponseStatusException {
+
+    public ProductNotFoundException(String message) {
+        super(HttpStatus.NOT_FOUND, message);
+    }
 }

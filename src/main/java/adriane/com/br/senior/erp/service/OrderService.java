@@ -68,22 +68,7 @@ public class OrderService {
     public OrderDto insertOrder(OrderDto orderDto) {
         List<ItemDto> itemsDto = orderDto.getItems();
         log.info("M=insertOrder, I=validando produtos no pedido, order={}", orderDto);
-        itemsDto.forEach(itemDto -> {
-
-            ProductDto productDto = productService
-                    .findProductById(itemDto.getProduct().getId());
-
-            if (productDto == null){
-                log.error("M=insertOrder, E= produto não cadastrado");
-                throw new ProductNotFoundException();
-            }
-
-            if (!Boolean.TRUE.equals(productDto.getIsActive())) {
-                log.error("M=insertOrder, E= produto não pode estar desativado");
-                throw new ProductNotAllowedException();
-            }
-
-        });
+        verifyProducts(itemsDto);
 
         log.info("M=insertOrder, I=salvando ordem");
         Order order = orderRepository.save(orderMapper.orderDtoToEntiy(orderDto));
@@ -99,6 +84,25 @@ public class OrderService {
         orderDto.setId(order.getId());
         log.info("M=insertOrder, I=Pedido salvo com sucesso, order={}", orderDto);
         return orderDto;
+    }
+
+    private void verifyProducts(List<ItemDto> itemsDto) {
+        itemsDto.forEach(itemDto -> {
+
+            ProductDto productDto = productService
+                    .findProductById(itemDto.getProduct().getId());
+
+            if (productDto == null){
+                log.error("M=insertOrder, E= produto não cadastrado, item={}", itemDto);
+                throw new ProductNotFoundException("Produto não existe");
+            }
+
+            if (!Boolean.TRUE.equals(productDto.getIsActive())) {
+                log.error("M=insertOrder, E= produto não pode estar desativado, product={}", productDto);
+                throw new ProductNotAllowedException("Produto não pode estar desativado");
+            }
+
+        });
     }
 
 }
