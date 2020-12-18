@@ -1,4 +1,4 @@
-# ERP Demo Project (Desafio Para Senior Sistemas)
+# ERP Demo Project (Solução do desafio Para Senior Sistemas)
 
 ------
 
